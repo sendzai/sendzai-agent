@@ -2,6 +2,7 @@
   "name": "@sendzai/agent",
   "version": "1.0.0",
   "description": "Sendzai Social Media CLI and MCP Server for AI Agents",
+  "license": "MIT",
   "main": "dist/cli.js",
   "bin": {
     "sendzai": "./dist/cli.js"
