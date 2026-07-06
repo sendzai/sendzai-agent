@@ -1,0 +1,24 @@
+{
+  "name": "@sendzai/agent",
+  "version": "1.0.0",
+  "description": "Sendzai Social Media CLI and MCP Server for AI Agents",
+  "main": "dist/cli.js",
+  "bin": {
+    "sendzai": "./dist/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "mcp": "node dist/mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "axios": "^1.6.8",
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  }
+}
