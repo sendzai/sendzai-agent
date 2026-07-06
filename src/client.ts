@@ -3,27 +3,57 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 
+const IS_DEV = process.env.NODE_ENV === "development" || process.env.SENDZAI_DEV === "true";
+const API_BASE_URL = IS_DEV
+  ? "http://localhost:8080"
+  : Buffer.from("aHR0cHM6Ly9hcGkuc2VuZHphaS5jb20=", "base64").toString("utf-8");
+
 export interface Config {
   apiKey?: string;
-  serverUrl?: string;
+  apiUrl?: string;
 }
 
 const CONFIG_FILE = path.join(os.homedir(), ".sendzai-agent.json");
 
+function loadEnvFile() {
+  const envPath = path.join(process.cwd(), ".env");
+  if (fs.existsSync(envPath)) {
+    try {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const firstEqual = trimmed.indexOf("=");
+          if (firstEqual > 0) {
+            const key = trimmed.substring(0, firstEqual).trim();
+            const val = trimmed.substring(firstEqual + 1).trim().replace(/^['"]|['"]$/g, '');
+            if (key && !process.env[key]) {
+              process.env[key] = val;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+}
+
 export function loadConfig(): Config {
+  loadEnvFile();
   const config: Config = {
     apiKey: process.env.SENDZAI_API_KEY,
-    serverUrl: process.env.SENDZAI_SERVER || "http://localhost:8080"
+    apiUrl: process.env.SENDZAI_API_URL
   };
 
   if (fs.existsSync(CONFIG_FILE)) {
     try {
       const fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
       if (!config.apiKey && fileConfig.apiKey) {
-        config.apiKey = fileFileConfigApiKey(fileConfig.apiKey);
+        config.apiKey = typeof fileConfig.apiKey === "string" ? fileConfig.apiKey : undefined;
       }
-      if (config.serverUrl === "http://localhost:8080" && fileConfig.serverUrl) {
-        config.serverUrl = fileConfig.serverUrl;
+      if (!config.apiUrl && fileConfig.apiUrl) {
+        config.apiUrl = typeof fileConfig.apiUrl === "string" ? fileConfig.apiUrl : undefined;
       }
     } catch (e) {
       // Ignore config parse errors
@@ -31,10 +61,6 @@ export function loadConfig(): Config {
   }
 
   return config;
-}
-
-function fileFileConfigApiKey(key: any): string | undefined {
-  return typeof key === "string" ? key : undefined;
 }
 
 export function saveConfig(config: Config) {
@@ -46,6 +72,16 @@ export function saveConfig(config: Config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(updated, null, 2), "utf-8");
 }
 
+export function clearConfig() {
+  if (fs.existsSync(CONFIG_FILE)) {
+    try {
+      fs.unlinkSync(CONFIG_FILE);
+    } catch (e) {
+      // Ignore
+    }
+  }
+}
+
 export class SendzaiClient {
   private axiosInstance: AxiosInstance;
 
@@ -53,12 +89,12 @@ export class SendzaiClient {
     const config = loadConfig();
     if (!config.apiKey) {
       throw new Error(
-        "API Key is missing. Please run `sendzai configure` or set SENDZAI_API_KEY environment variable."
+        "API Key is missing. Please run `sendzai configure --api-key <key>` or set SENDZAI_API_KEY environment variable."
       );
     }
 
     this.axiosInstance = axios.create({
-      baseURL: config.serverUrl,
+      baseURL: config.apiUrl || API_BASE_URL,
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json"
@@ -71,12 +107,14 @@ export class SendzaiClient {
     return response.data;
   }
 
-  async sendMessage(to: string, message: string, mediaUrl?: string, deviceId?: number) {
+  async sendMessage(to: string, message: string, mediaUrl?: string, deviceId?: number, fromPhone?: string, dryRun?: boolean) {
     const response = await this.axiosInstance.post("/api/v1/agent/send", {
       to,
       message,
       mediaUrl,
-      deviceId
+      deviceId,
+      fromPhone,
+      dryRun
     });
     return response.data;
   }
@@ -92,4 +130,39 @@ export class SendzaiClient {
     });
     return response.data;
   }
+
+  async scheduleMessage(payload: {
+    to: string;
+    message: string;
+    sendAt: string;
+    timezone?: string;
+    deviceId?: number;
+    fromPhone?: string;
+    mediaUrl?: string;
+    windowStart?: string;
+    windowEnd?: string;
+    allowedDays?: string[];
+    randomizeInWindow?: boolean;
+    repeatUnit?: string;
+    repeatInterval?: number;
+    maxRepeats?: number;
+    repeatEndAt?: string;
+    specificTimes?: string[];
+    type?: string;
+    dryRun?: boolean;
+  }) {
+    const response = await this.axiosInstance.post("/api/v1/agent/schedule", payload);
+    return response.data;
+  }
+
+  async listScheduledMessages() {
+    const response = await this.axiosInstance.get("/api/v1/agent/schedule");
+    return response.data;
+  }
+
+  async cancelScheduledMessage(id: number) {
+    const response = await this.axiosInstance.delete(`/api/v1/agent/schedule/${id}`);
+    return response.data;
+  }
 }
+
