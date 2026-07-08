@@ -1,0 +1,195 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sendzai Agent API",
+    "description": "WhatsApp orchestration endpoints for sending and scheduling messages",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.sendzai.com"
+    }
+  ],
+  "paths": {
+    "/api/v1/agent/status": {
+      "get": {
+        "summary": "Check account status and connected sessions",
+        "operationId": "getAgentStatus",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/agent/send": {
+      "post": {
+        "summary": "Quick send a WhatsApp message",
+        "operationId": "sendQuickMessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Recipient phone number, contact name, or group name"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Plain text message body"
+                  },
+                  "fromPhone": {
+                    "type": "string",
+                    "description": "Optional sender display name or phone number"
+                  },
+                  "mediaUrl": {
+                    "type": "string",
+                    "description": "Optional public URL of an image/file"
+                  },
+                  "dryRun": {
+                    "type": "boolean",
+                    "description": "Validate configurations without delivering the message"
+                  }
+                },
+                "required": ["to", "message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    },
+    "/api/v1/agent/schedule": {
+      "post": {
+        "summary": "Schedule a recurring or one-time WhatsApp message",
+        "operationId": "scheduleMessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Comma-separated list of recipient phone numbers, contact names, or group names"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message body to send"
+                  },
+                  "sendAt": {
+                    "type": "string",
+                    "description": "Start time in yyyy-MM-dd HH:mm format"
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "description": "Target timezone (e.g., Asia/Kolkata)"
+                  },
+                  "fromPhone": {
+                    "type": "string",
+                    "description": "Optional sender display name or phone number"
+                  },
+                  "dryRun": {
+                    "type": "boolean",
+                    "description": "Validate configurations without storing the schedule"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Type of schedule: 'none', 'cron', 'specific', 'window'"
+                  },
+                  "windowStart": {
+                    "type": "string",
+                    "description": "Allowed start window time (HH:mm)"
+                  },
+                  "windowEnd": {
+                    "type": "string",
+                    "description": "Allowed end window time (HH:mm)"
+                  },
+                  "allowedDays": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Allowed delivery days of the week (e.g. ['MON', 'TUE'])"
+                  },
+                  "repeatUnit": {
+                    "type": "string",
+                    "description": "Repeat interval unit: 'NONE', 'MINUTES', 'HOURS', 'DAYS', 'WEEKS', 'MONTHS'"
+                  },
+                  "repeatInterval": {
+                    "type": "integer",
+                    "description": "Interval frequency count"
+                  },
+                  "maxRepeats": {
+                    "type": "integer",
+                    "description": "Maximum number of repeat cycles"
+                  },
+                  "repeatEndAt": {
+                    "type": "string",
+                    "description": "Repeat end time boundary (yyyy-MM-dd HH:mm)"
+                  },
+                  "specificTimes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of specific daily times (HH:mm) to send"
+                  },
+                  "mediaUrl": {
+                    "type": "string",
+                    "description": "Optional public URL of an image/file attachment"
+                  }
+                },
+                "required": ["to", "message", "sendAt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message scheduled successfully"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all agent-scheduled messages and campaigns",
+        "operationId": "listSchedules",
+        "responses": {
+          "200": {
+            "description": "List of scheduled campaigns"
+          }
+        }
+      }
+    },
+    "/api/v1/agent/schedule/{id}": {
+      "delete": {
+        "summary": "Cancel a pending scheduled message or campaign by ID",
+        "operationId": "cancelSchedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the scheduled campaign to cancel"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign cancelled successfully"
+          }
+        }
+      }
+    }
+  }
+}
