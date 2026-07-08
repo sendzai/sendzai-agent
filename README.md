@@ -134,3 +134,9 @@ const result = await client.sendMessage(
 
 console.log("Sent successfully:", result);
 ```
+
+---
+
+> [!IMPORTANT]
+> To use this agent, you need a **Sendzai Account** and a **Pro Subscription**.
+> Please visit our website at [sendzai.com](https://sendzai.com) to sign up and configure your account.

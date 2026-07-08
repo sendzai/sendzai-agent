@@ -1,257 +1,23 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { SendzaiClient } from "./client.js";
-const server = new Server({
+import { z } from "zod";
+const server = new McpServer({
     name: "sendzai",
-    version: "1.0.0",
-}, {
-    capabilities: {
-        tools: {},
-    },
+    version: "1.0.3",
 });
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-        tools: [
-            {
-                name: "sendzai_get_status",
-                description: "Check overall Sendzai subscription status, quotas, and connected WhatsApp sessions.",
-                inputSchema: {
-                    type: "object",
-                    properties: {},
-                },
-            },
-            {
-                name: "sendzai_list_sessions",
-                description: "List connected WhatsApp numbers, active sessions, and connection statuses.",
-                inputSchema: {
-                    type: "object",
-                    properties: {},
-                },
-            },
-            {
-                name: "sendzai_send_message",
-                description: "Send a quick WhatsApp message to a recipient. Routes automatically or accepts a specific device ID or sender phone number.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        to: {
-                            type: "string",
-                            description: "Recipient phone number with country code (e.g. +919876543210)",
-                        },
-                        message: {
-                            type: "string",
-                            description: "The text message body to send",
-                        },
-                        mediaUrl: {
-                            type: "string",
-                            description: "Optional public URL of an image/media file to send",
-                        },
-                        deviceId: {
-                            type: "number",
-                            description: "Optional specific device ID slot to send from",
-                        },
-                        from: {
-                            type: "string",
-                            description: "Optional specific phone number to send from",
-                        },
-                    },
-                    required: ["to", "message"],
-                },
-            },
-            {
-                name: "sendzai_list_campaigns",
-                description: "List recent campaigns and their statuses (DRAFT, RUNNING, COMPLETED, etc.).",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        status: {
-                            type: "string",
-                            description: "Optional status to filter campaigns",
-                        },
-                    },
-                },
-            },
-            {
-                name: "sendzai_schedule_message",
-                description: "Schedule a WhatsApp message or recurring sequence to be sent in the future.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        to: {
-                            type: "string",
-                            description: "Recipient phone number with country code (e.g. +919876543210)",
-                        },
-                        message: {
-                            type: "string",
-                            description: "The text message body to send",
-                        },
-                        at: {
-                            type: "string",
-                            description: "Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 string",
-                        },
-                        timezone: {
-                            type: "string",
-                            description: "Timezone (default: UTC)",
-                        },
-                        deviceId: {
-                            type: "number",
-                            description: "Optional specific device ID slot to send from",
-                        },
-                        from: {
-                            type: "string",
-                            description: "Optional specific phone number to send from",
-                        },
-                        mediaUrl: {
-                            type: "string",
-                            description: "Optional public media URL",
-                        },
-                        windowStart: {
-                            type: "string",
-                            description: "Delivery window start: 'HH:mm' (e.g. 09:00)",
-                        },
-                        windowEnd: {
-                            type: "string",
-                            description: "Delivery window end: 'HH:mm' (e.g. 21:00)",
-                        },
-                        allowedDays: {
-                            type: "array",
-                            items: { type: "string" },
-                            description: "Allowed days (e.g. ['MON', 'TUE', 'WED'])",
-                        },
-                        randomize: {
-                            type: "boolean",
-                            description: "Randomize delivery within the window",
-                        },
-                        repeatUnit: {
-                            type: "string",
-                            description: "Recurrence unit: MINUTES | HOURS | DAYS | WEEKS | MONTHS | YEARS",
-                        },
-                        repeatInterval: {
-                            type: "number",
-                            description: "Repeat every N units",
-                        },
-                        maxRepeats: {
-                            type: "number",
-                            description: "Max number of repeats",
-                        },
-                        repeatEnd: {
-                            type: "string",
-                            description: "Stop repeating after this date ('yyyy-MM-dd HH:mm')",
-                        },
-                        times: {
-                            type: "array",
-                            items: { type: "string" },
-                            description: "Specific delivery times for SEVERAL type",
-                        },
-                        type: {
-                            type: "string",
-                            description: "Scheduling type: DAILY | WEEKDAY | WEEKEND | WEEKLY | MONTHLY | YEARLY | HOURLY | SEVERAL | CUSTOM | INTERVAL",
-                        },
-                    },
-                    required: ["to", "message", "at"],
-                },
-            },
-            {
-                name: "sendzai_list_schedules",
-                description: "List all agent-scheduled messages and their statuses.",
-                inputSchema: {
-                    type: "object",
-                    properties: {},
-                },
-            },
-            {
-                name: "sendzai_cancel_schedule",
-                description: "Cancel a pending scheduled message by its ID.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        id: {
-                            type: "number",
-                            description: "The scheduled message ID to cancel",
-                        },
-                    },
-                    required: ["id"],
-                },
-            },
-        ],
-    };
-});
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
+const client = new SendzaiClient();
+// Helper to catch errors and return formatted error messages
+async function handleToolCall(fn, mapper) {
     try {
-        const client = new SendzaiClient();
-        switch (name) {
-            case "sendzai_get_status": {
-                const status = await client.getStatus();
-                return {
-                    content: [{ type: "text", text: JSON.stringify(status, null, 2) }],
-                };
-            }
-            case "sendzai_list_sessions": {
-                const sessions = await client.listWhatsAppNumbers();
-                return {
-                    content: [{ type: "text", text: JSON.stringify(sessions, null, 2) }],
-                };
-            }
-            case "sendzai_send_message": {
-                const to = String(args?.to || "");
-                const message = String(args?.message || "");
-                const mediaUrl = args?.mediaUrl ? String(args.mediaUrl) : undefined;
-                const deviceId = args?.deviceId ? Number(args.deviceId) : undefined;
-                const fromPhone = args?.from ? String(args.from) : undefined;
-                const result = await client.sendMessage(to, message, mediaUrl, deviceId, fromPhone);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-                };
-            }
-            case "sendzai_list_campaigns": {
-                const status = args?.status ? String(args.status) : undefined;
-                const campaigns = await client.listCampaigns(status);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(campaigns, null, 2) }],
-                };
-            }
-            case "sendzai_schedule_message": {
-                const result = await client.scheduleMessage({
-                    to: String(args?.to || ""),
-                    message: String(args?.message || ""),
-                    sendAt: String(args?.at || ""),
-                    timezone: args?.timezone ? String(args.timezone) : undefined,
-                    deviceId: args?.deviceId ? Number(args.deviceId) : undefined,
-                    fromPhone: args?.from ? String(args.from) : undefined,
-                    mediaUrl: args?.mediaUrl ? String(args.mediaUrl) : undefined,
-                    windowStart: args?.windowStart ? String(args.windowStart) : undefined,
-                    windowEnd: args?.windowEnd ? String(args.windowEnd) : undefined,
-                    allowedDays: args?.allowedDays ? args.allowedDays : undefined,
-                    randomizeInWindow: args?.randomize ? Boolean(args.randomize) : undefined,
-                    repeatUnit: args?.repeatUnit ? String(args.repeatUnit) : undefined,
-                    repeatInterval: args?.repeatInterval ? Number(args.repeatInterval) : undefined,
-                    maxRepeats: args?.maxRepeats ? Number(args.maxRepeats) : undefined,
-                    repeatEndAt: args?.repeatEnd ? String(args.repeatEnd) : undefined,
-                    specificTimes: args?.times ? args.times : undefined,
-                    type: args?.type ? String(args.type) : undefined,
-                });
-                return {
-                    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-                };
-            }
-            case "sendzai_list_schedules": {
-                const result = await client.listScheduledMessages();
-                return {
-                    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-                };
-            }
-            case "sendzai_cancel_schedule": {
-                const id = Number(args?.id);
-                const result = await client.cancelScheduledMessage(id);
-                return {
-                    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-                };
-            }
-            default:
-                throw new Error(`Tool ${name} not found`);
+        let result = await fn();
+        if (mapper) {
+            result = mapper(result);
         }
+        return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            structuredContent: result,
+        };
     }
     catch (e) {
         const errMsg = e.response?.data?.message || e.message;
@@ -260,6 +26,159 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [{ type: "text", text: JSON.stringify({ success: false, error: errMsg }, null, 2) }],
         };
     }
+}
+// 1. sendzai_get_status
+server.registerTool("sendzai_get_status", {
+    description: "Check overall Sendzai subscription status, quotas, and connected WhatsApp sessions.",
+    inputSchema: {},
+    outputSchema: z.object({
+        subscriptionStatus: z.string(),
+        planName: z.string(),
+        remainingMessageQuota: z.number(),
+        totalMessageLimit: z.number(),
+        connectedWhatsAppSessions: z.number(),
+        totalWhatsAppSessions: z.number(),
+        activeCampaigns: z.number(),
+    })
+}, async () => {
+    return handleToolCall(() => client.getStatus());
+});
+// 2. sendzai_list_sessions
+server.registerTool("sendzai_list_sessions", {
+    description: "List connected WhatsApp numbers, active sessions, and connection statuses.",
+    inputSchema: {},
+    outputSchema: z.object({
+        sessions: z.array(z.object({
+            id: z.number(),
+            phone: z.string(),
+            name: z.string().nullable(),
+            provider: z.string(),
+            isActive: z.boolean(),
+            status: z.string(),
+        }))
+    })
+}, async () => {
+    return handleToolCall(() => client.listWhatsAppNumbers(), (res) => ({ sessions: res }));
+});
+// 3. sendzai_send_message
+server.registerTool("sendzai_send_message", {
+    description: "Send a quick WhatsApp message to a recipient. Routes automatically or accepts a specific device ID or sender phone number.",
+    inputSchema: {
+        to: z.string().describe("Recipient phone number, contact name, or WhatsApp group name (e.g. +919876543210, Jane, or Sales Group)"),
+        message: z.string().describe("The text message body to send"),
+        mediaUrl: z.string().optional().describe("Optional public URL of an image/media file to send"),
+        deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
+        from: z.string().optional().describe("Optional specific phone number or session display name to send from (e.g. John)"),
+        dryRun: z.boolean().optional().describe("Validate inputs and preview resolution without sending")
+    },
+    outputSchema: z.object({
+        success: z.boolean(),
+        senderNumber: z.string(),
+        recipientNumber: z.string(),
+        dryRun: z.boolean(),
+    })
+}, async (args) => {
+    return handleToolCall(() => client.sendMessage(args.to, args.message, args.mediaUrl, args.deviceId, args.from, args.dryRun));
+});
+// 4. sendzai_list_campaigns
+server.registerTool("sendzai_list_campaigns", {
+    description: "List recent campaigns and their statuses (DRAFT, RUNNING, COMPLETED, etc.).",
+    inputSchema: {
+        status: z.string().optional().describe("Optional status to filter campaigns")
+    },
+    outputSchema: z.object({
+        campaigns: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+            status: z.string(),
+            totalContacts: z.number(),
+            sentCount: z.number(),
+            failedCount: z.number(),
+        }))
+    })
+}, async (args) => {
+    return handleToolCall(() => client.listCampaigns(args.status));
+});
+// 5. sendzai_schedule_message
+server.registerTool("sendzai_schedule_message", {
+    description: "Schedule a WhatsApp message or recurring sequence to be sent in the future.",
+    inputSchema: {
+        to: z.string().describe("Recipient phone number, contact name, or WhatsApp group name (e.g. +919876543210, Jane, or AutoSend Test Group)"),
+        message: z.string().describe("The text message body to send"),
+        at: z.string().describe("Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 string"),
+        timezone: z.string().optional().describe("Timezone (default: UTC)"),
+        deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
+        from: z.string().optional().describe("Optional specific phone number or session display name to send from (e.g. Vexx)"),
+        mediaUrl: z.string().optional().describe("Optional public media URL"),
+        windowStart: z.string().optional().describe("Delivery window start: 'HH:mm' (e.g. 09:00)"),
+        windowEnd: z.string().optional().describe("Delivery window end: 'HH:mm' (e.g. 21:00)"),
+        allowedDays: z.array(z.string()).optional().describe("Allowed days (e.g. ['MON', 'TUE', 'WED'])"),
+        randomize: z.boolean().optional().describe("Randomize delivery within the window"),
+        repeatUnit: z.string().optional().describe("Recurrence unit: MINUTES | HOURS | DAYS | WEEKS | MONTHS | YEARS"),
+        repeatInterval: z.number().optional().describe("Repeat every N units"),
+        maxRepeats: z.number().optional().describe("Max number of repeats"),
+        repeatEnd: z.string().optional().describe("Stop repeating after this date ('yyyy-MM-dd HH:mm')"),
+        times: z.array(z.string()).optional().describe("Specific delivery times for SEVERAL type"),
+        type: z.string().optional().describe("Scheduling type: DAILY | WEEKDAY | WEEKEND | WEEKLY | MONTHLY | YEARLY | HOURLY | SEVERAL | CUSTOM | INTERVAL")
+    },
+    outputSchema: z.object({
+        id: z.number(),
+        to: z.string(),
+        message: z.string(),
+        status: z.string(),
+        timezone: z.string(),
+        isRecurring: z.boolean(),
+    })
+}, async (args) => {
+    return handleToolCall(() => client.scheduleMessage({
+        to: args.to,
+        message: args.message,
+        sendAt: args.at,
+        timezone: args.timezone,
+        deviceId: args.deviceId,
+        fromPhone: args.from,
+        mediaUrl: args.mediaUrl,
+        windowStart: args.windowStart,
+        windowEnd: args.windowEnd,
+        allowedDays: args.allowedDays,
+        randomizeInWindow: args.randomize,
+        repeatUnit: args.repeatUnit,
+        repeatInterval: args.repeatInterval,
+        maxRepeats: args.maxRepeats,
+        repeatEndAt: args.repeatEnd,
+        specificTimes: args.times,
+        type: args.type,
+    }));
+});
+// 6. sendzai_list_schedules
+server.registerTool("sendzai_list_schedules", {
+    description: "List all active, upcoming scheduled WhatsApp messages.",
+    inputSchema: {},
+    outputSchema: z.object({
+        schedules: z.array(z.object({
+            id: z.number(),
+            to: z.string(),
+            message: z.string(),
+            status: z.string(),
+            timezone: z.string(),
+            isRecurring: z.boolean(),
+        }))
+    })
+}, async () => {
+    return handleToolCall(() => client.listScheduledMessages(), (res) => ({ schedules: res }));
+});
+// 7. sendzai_cancel_schedule
+server.registerTool("sendzai_cancel_schedule", {
+    description: "Cancel a pending scheduled message by its ID.",
+    inputSchema: {
+        id: z.number().describe("The scheduled message ID to cancel")
+    },
+    outputSchema: z.object({
+        success: z.boolean(),
+        message: z.string(),
+    })
+}, async (args) => {
+    return handleToolCall(() => client.cancelScheduledMessage(args.id));
 });
 async function main() {
     const transport = new StdioServerTransport();
