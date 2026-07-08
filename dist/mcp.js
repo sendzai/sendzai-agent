@@ -4,7 +4,7 @@ import { SendzaiClient } from "./client.js";
 import { z } from "zod";
 const server = new McpServer({
     name: "sendzai",
-    version: "1.0.3",
+    version: "1.0.4",
 });
 const client = new SendzaiClient();
 // Helper to catch errors and return formatted error messages
@@ -106,7 +106,7 @@ server.registerTool("sendzai_schedule_message", {
         to: z.string().describe("Recipient phone number, contact name, or WhatsApp group name (e.g. +919876543210, Jane, or AutoSend Test Group)"),
         message: z.string().describe("The text message body to send"),
         at: z.string().describe("Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 string"),
-        timezone: z.string().optional().describe("Timezone (default: UTC)"),
+        timezone: z.string().optional().describe("Timezone identifier (e.g. Asia/Kolkata). Defaults to the user's account timezone if not specified."),
         deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
         from: z.string().optional().describe("Optional specific phone number or session display name to send from (e.g. Vexx)"),
         mediaUrl: z.string().optional().describe("Optional public media URL"),

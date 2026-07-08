@@ -5,7 +5,7 @@ const program = new Command();
 program
     .name("sendzai")
     .description("Sendzai CLI for WhatsApp Automation & AI Agents")
-    .version("1.0.3");
+    .version("1.0.4");
 program
     .command("configure")
     .description("Configure Sendzai CLI with your API key (get it from settings dashboard)")
@@ -102,7 +102,7 @@ program
     .requiredOption("-t, --to <phone>", "Recipient phone number")
     .requiredOption("-m, --message <text>", "Message body text")
     .requiredOption("-a, --at <datetime>", "Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 (e.g. 2024-12-01T10:00:00Z)")
-    .option("-z, --timezone <tz>", "Timezone (e.g. Asia/Kolkata)", "UTC")
+    .option("-z, --timezone <tz>", "Timezone (e.g. Asia/Kolkata). Defaults to your account timezone if not specified.")
     .option("-d, --device <id>", "Pin to sender device by ID")
     .option("-f, --from <phone>", "Pin to sender device by phone number")
     .option("-u, --media-url <url>", "Optional media URL")
