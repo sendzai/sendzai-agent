@@ -101,11 +101,11 @@ export class SendzaiClient {
         return response.data;
     }
     async listWhatsAppNumbers() {
-        const response = await this.axiosInstance.get("/api/v1/numbers");
+        const response = await this.axiosInstance.get("/api/v1/agent/sessions");
         return response.data;
     }
     async listCampaigns(status) {
-        const response = await this.axiosInstance.get("/api/v1/campaigns", {
+        const response = await this.axiosInstance.get("/api/v1/agent/campaigns", {
             params: { status }
         });
         return response.data;

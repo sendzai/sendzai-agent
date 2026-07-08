@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const server = new McpServer({
   name: "sendzai",
-  version: "1.0.4",
+  version: "1.0.5",
 });
 
 const client = new SendzaiClient();

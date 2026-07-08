@@ -5,7 +5,7 @@ const program = new Command();
 program
     .name("sendzai")
     .description("Sendzai CLI for WhatsApp Automation & AI Agents")
-    .version("1.0.4");
+    .version("1.0.5");
 program
     .command("configure")
     .description("Configure Sendzai CLI with your API key (get it from settings dashboard)")

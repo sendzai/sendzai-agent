@@ -120,12 +120,12 @@ export class SendzaiClient {
   }
 
   async listWhatsAppNumbers() {
-    const response = await this.axiosInstance.get("/api/v1/numbers");
+    const response = await this.axiosInstance.get("/api/v1/agent/sessions");
     return response.data;
   }
 
   async listCampaigns(status?: string) {
-    const response = await this.axiosInstance.get("/api/v1/campaigns", {
+    const response = await this.axiosInstance.get("/api/v1/agent/campaigns", {
       params: { status }
     });
     return response.data;
