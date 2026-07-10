@@ -6,12 +6,13 @@ An automated WhatsApp messaging orchestrator and CLI utility for human operators
 
 ## Features
 
-- 🚀 **Quick Send:** Dispatch messages to individual phone numbers, WhatsApp Group JIDs, saved contact names, or synced WhatsApp group names.
-- 📅 **Advanced Scheduling:** Schedule messages with flexible recurrence rules, allowed delivery windows (e.g. 09:00 - 21:00), allowed days of the week, and anti-ban delivery time randomization.
-- 📸 **Multi-Media Status:** Post multiple image/video WhatsApp stories in one command — each item is posted sequentially with a 1-second delay.
-- 🔍 **Dynamic Resolution:** Resolve sender/recipient names dynamically using fast PostgreSQL composite indexes.
-- 🧪 **Dry-Run Mode:** Validate configurations, timezones, and lookup targets with `--dry-run` without sending messages or writing to the database.
-- 🤖 **AI-Agent Ready:** Integrates easily into agent frameworks (LangChain, AutoGen, Claude Code, Cursor, Codex, Amp) via stdio MCP or standard Node SDK.
+- 🚀 **Quick Send:** Dispatch text or media messages instantly to phone numbers, contact names, group names, or WhatsApp Group JIDs.
+- 📅 **Advanced Scheduling:** Schedule messages and WhatsApp Status updates with flexible recurrence rules, delivery windows (e.g. 09:00–21:00), allowed days, and anti-ban randomization.
+- 📸 **Multi-Media Status:** Post multiple image/video WhatsApp Stories in one command using structured `--media type:url` input — each item is delivered sequentially.
+- 📲 **WhatsApp Status Posting:** Instantly post text or media stories visible to all contacts or a custom JID list.
+- 🔍 **Dynamic Resolution:** Resolve recipients and senders by name with exact-match-first PostgreSQL lookups, falling back to partial matching.
+- 🧪 **Dry-Run Mode:** Validate inputs, timezones, and scheduling configs without sending or writing to the database.
+- 🤖 **AI-Agent Ready:** Integrates with LangChain, AutoGen, Claude, Cursor, Codex, and Amp via stdio MCP or Node SDK.
 
 ---
 

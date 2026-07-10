@@ -13,7 +13,7 @@ function collectMedia(value, previous) {
 program
     .name("sendzai")
     .description("Sendzai CLI for WhatsApp Automation & AI Agents")
-    .version("1.0.7");
+    .version("1.0.8");
 program
     .command("configure")
     .description("Configure Sendzai CLI with your API key (get it from settings dashboard)")
