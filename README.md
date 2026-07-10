@@ -1,22 +1,22 @@
 # Sendzai Agent CLI & SDK
 
-An automated WhatsApp messaging orchestrator and CLI utility for human operators and AI Agent workflows. Connect your slots, manage campaigns, resolve contact & group names dynamically, and schedule recurring messages with complex business rules.
+An automated WhatsApp messaging orchestrator and CLI utility for human operators and AI Agent workflows. Connect your slots, manage campaigns, resolve contact & group names dynamically, schedule recurring messages, and post WhatsApp Status/Stories with complex business rules.
 
 ---
 
 ## Features
 
 - 🚀 **Quick Send:** Dispatch messages to individual phone numbers, WhatsApp Group JIDs, saved contact names, or synced WhatsApp group names.
-- 📅 **Advanced Scheduling:** Schedule messages with flexible recurrence rules, allowed delivery windows (e.g. 09:00 - 21:00), allowed days of the week, and anti-ban delivery time randomization.
-- 🔍 **Dynamic Resolution:** Resolve sender/recipient names dynamically using fast PostgreSQL composite indexes.
-- 🧪 **Dry-Run Mode:** Validate configurations, timezones, and lookup targets with `--dry-run` without sending messages or writing to the database.
-- 🤖 **AI-Agent Ready:** Integrates easily into agent frameworks (LangChain, AutoGen, Claude Code, Cursor, Codex, Amp) via stdio MCP or standard Node SDK.
+- 📅 **Advanced Scheduling:** Schedule messages and status updates with flexible recurrence rules, delivery windows (e.g. 09:00–21:00), allowed days, and anti-ban randomization.
+- 📸 **Multi-Media Status:** Post multiple image/video WhatsApp stories in one command — each item is posted sequentially.
+- 🔍 **Dynamic Resolution:** Resolve sender/recipient names dynamically using fast PostgreSQL composite indexes (exact match first, falls back to partial).
+- 🧪 **Dry-Run Mode:** Validate configurations, timezones, and lookup targets with `--dry-run` without sending or writing to the database.
+- 🤖 **AI-Agent Ready:** Integrates easily into agent frameworks (LangChain, AutoGen, Claude, Cursor, Codex, Amp) via stdio MCP or standard Node SDK.
 
 ---
 
 ## Installation
 
-Install the CLI globally on your system:
 ```bash
 npm install -g @sendzai/agent
 ```
@@ -25,12 +25,11 @@ npm install -g @sendzai/agent
 
 ## Configuration
 
-Set up your authorization key from your Sendzai Dashboard:
 ```bash
 # Save your bearer key locally
 sendzai configure --api-key szai_4c236621...
 
-# Inspect the active configuration setup
+# Inspect the active configuration
 sendzai configure
 ```
 
@@ -39,60 +38,70 @@ sendzai configure
 ## CLI Reference
 
 ### 1. Monitor Account Status
-Check your active plan limits, remaining message quota, and connected WhatsApp sessions:
 ```bash
 sendzai status
 ```
 
-### 2. Quick Send
-Deliver text or media messages instantly. 
+---
 
-#### A. Using Direct Phone Numbers & Auto-Selected Sender
+### 2. Quick Send
+
+#### A. Phone Number & Auto-Selected Sender
 ```bash
-# Send directly to a normalized phone number
 sendzai send -t "+15558675309" -m "Hello John!"
 ```
 
-#### B. Using Contact Names & Session Display Names
+#### B. Contact Name & Session Display Name
 ```bash
-# Resolve contact name "John Doe" and sender slot name "Sales" dynamically
 sendzai send -t "John Doe" -f "Sales" -m "Hi John! Sent from our Sales channel."
 ```
 
-#### C. Using WhatsApp Group Names & Specific Device Slot IDs
+#### C. WhatsApp Group Name & Specific Device Slot
 ```bash
-# Resolve WhatsApp Group "Sendzai" and send from device slot ID 4
 sendzai send -t "Sendzai" -d 4 -m "Hi Team!"
 ```
 
-#### D. Dry-Run Verification
+#### D. With Media Attachment
 ```bash
-# Validate name lookups and connection status without sending
+sendzai send -t "+15558675309" -m "Check this out!" -u "https://example.com/image.jpg"
+```
+
+#### E. Dry-Run Verification
+```bash
 sendzai send -t "John Doe" -m "Test check" --dry-run
 ```
 
 ---
 
 ### 3. Schedule Messages
-Schedule one-time or recurring campaigns.
 
-#### A. One-Time Scheduling (Using Names)
+All scheduled messages and status updates support the `--media` flag for structured media attachments.
+
+#### Media Flag Format
+```
+--media <type>:<url>
+```
+- `type` must be `image` or `video`
+- Flag is **repeatable** — pass it multiple times to attach multiple items
+
+#### A. One-Time Schedule (Direct Message)
 ```bash
-# Schedule for a specific local time resolved to "John Doe" via "Sales" channel
 sendzai schedule -t "John Doe" -f "Sales" -m "Good morning!" -a "2026-07-07 09:00" -z "Asia/Kolkata"
 ```
 
-#### B. One-Time Scheduling (Using Phone Numbers)
+#### B. Schedule with Media Attachments
 ```bash
-# Schedule directly using raw phone numbers
-sendzai schedule -t "+15558675309" -f "+15551234567" -m "Raw number schedule" -a "2026-07-07T09:00:00Z"
+sendzai schedule -t "+15558675309" \
+  -m "Check out these shots!" \
+  --media image:https://example.com/photo1.jpg \
+  --media image:https://example.com/photo2.jpg \
+  -a "2026-07-12 09:00" -z "Asia/Kolkata"
 ```
 
-#### C. Advanced Recurring Scheduling (Using Group Name)
+#### C. Recurring Schedule with Delivery Window
 ```bash
-# Schedule an hourly recurring message to a WhatsApp Group with restricted delivery window and dry-run check
 sendzai schedule -t "Sendzai" \
-  -m "Hourly heartbeat report" \
+  -m "Hourly heartbeat" \
   -a "2026-07-07 08:00" \
   --window-start "09:00" \
   --window-end "21:00" \
@@ -102,20 +111,27 @@ sendzai schedule -t "Sendzai" \
   --dry-run
 ```
 
-#### D. Scheduling Status updates
+#### D. Schedule WhatsApp Status Update (Text)
 ```bash
-# Schedule a WhatsApp status update with a caption
-sendzai schedule --status -m "Scheduled morning status update!" -a "2026-07-11 09:00" -z "Asia/Kolkata"
+sendzai schedule --status -m "Scheduled morning update!" -a "2026-07-11 09:00" -z "Asia/Kolkata"
 ```
 
+#### E. Schedule WhatsApp Status with Media
+```bash
+sendzai schedule --status \
+  -m "Weekend vibes 🌅" \
+  --media image:https://picsum.photos/seed/sunrise/800/600 \
+  -a "2026-07-12 08:00" -z "Asia/Kolkata"
+```
+
+---
 
 ### 4. Manage Schedules
-List pending agent campaigns or cancel a scheduled slot:
 ```bash
 # List all scheduled campaigns
 sendzai schedules
 
-# Cancel a campaign by its ID
+# Cancel a campaign by ID
 sendzai cancel --id 174
 ```
 
@@ -123,41 +139,24 @@ sendzai cancel --id 174
 
 ### 5. Lookups & Searching
 
-Query lists, contacts, or active WhatsApp groups to resolve exact targets easily.
-
-#### A. List Recipient Contact Lists
+#### A. Recipient Contact Lists
 ```bash
-# List all recipient lists
 sendzai lists
-
-# Filter recipient lists by name query
 sendzai lists --query "Customers"
 ```
 
-#### B. Search Contacts Across Lists
-Searches for individual contact entries. Prioritizes exact case-insensitive matches on contact name or phone number first, falling back to a partial contains match.
+#### B. Search Contacts
+Prioritizes exact case-insensitive matches, falls back to partial contains.
 ```bash
-# List/search all contacts
 sendzai contacts
-
-# Search for a contact by name (prioritizes exact matches)
 sendzai contacts --query "John Doe"
-
-# Search within a specific list
 sendzai contacts --query "John" --list-id 4
 ```
 
 #### C. Search WhatsApp Groups
-Searches synced active WhatsApp groups. Prioritizes exact case-insensitive matches on group name, falling back to a partial contains match.
 ```bash
-# List all groups
 sendzai groups
-
-# Search for a specific group name (prioritizes exact matches)
 sendzai groups --query "Sales"
-
-# Filter by a specific sender device ID
-# Filter by a specific sender device ID
 sendzai groups --query "Sales" --device 43
 ```
 
@@ -165,52 +164,66 @@ sendzai groups --query "Sales" --device 43
 
 ### 6. WhatsApp Status Posting
 
-Post a text or media (image/video) story update to your WhatsApp Status. Visible to all contacts by default.
+Post text or structured media stories to your WhatsApp Status. Visible to all contacts by default.
 
 #### A. Text Status
 ```bash
-sendzai post-status -m "Working on a new feature release 🚀"
+sendzai post-status -m "Working on something exciting 🚀"
 ```
 
-#### B. Media Status (Image/Video)
+#### B. Single Image Status
 ```bash
-sendzai post-status -u "https://picsum.photos/800/600" -m "Enjoying a beautiful morning!"
+sendzai post-status -m "Beautiful morning!" \
+  --media image:https://picsum.photos/seed/morning/800/600
 ```
 
-#### C. Custom Viewers List (JIDs)
+#### C. Multiple Images / Videos (Posted Sequentially)
 ```bash
-sendzai post-status -m "Internal update" --no-all-contacts --jids "917821876667@s.whatsapp.net,120363028436768532@g.us"
+sendzai post-status -m "Weekend highlights 📸" \
+  --media image:https://picsum.photos/seed/alpha/800/600 \
+  --media image:https://picsum.photos/seed/beta/800/600 \
+  --media video:https://example.com/clip.mp4
+```
+
+#### D. Custom Viewers List (JIDs)
+```bash
+sendzai post-status -m "Internal update" \
+  --no-all-contacts \
+  --jids "917821876667@s.whatsapp.net,120363028436768532@g.us"
 ```
 
 ---
 
 ## Programmatic SDK Usage
 
-You can also import `SendzaiClient` programmatically inside your Node/TypeScript projects:
-
 ```typescript
 import { SendzaiClient } from "@sendzai/agent";
 
 const client = new SendzaiClient();
 
-// 1. Send quick message
-const result = await client.sendMessage(
-  "John Doe", 
-  "Hello John!", 
-  undefined, // mediaUrl
-  undefined, // deviceId
-  "Sales"     // fromPhone display name
-);
+// 1. Send a quick message
+await client.sendMessage("John Doe", "Hello!", undefined, undefined, "Sales");
 
-console.log("Sent successfully:", result);
-
-// 2. Post status update
-const statusResult = await client.postStatus({
-  message: "Daily update posted from AI Agent",
+// 2. Post a multi-media status
+await client.postStatus({
+  message: "Weekend highlights 📸",
+  mediaItems: [
+    { url: "https://picsum.photos/seed/alpha/800/600", type: "image" },
+    { url: "https://picsum.photos/seed/beta/800/600",  type: "image" },
+  ],
   allContacts: true
 });
 
-console.log("Status posted:", statusResult);
+// 3. Schedule a message with media
+await client.scheduleMessage({
+  to: "+15558675309",
+  message: "Check this out!",
+  sendAt: "2026-07-12 09:00",
+  timezone: "Asia/Kolkata",
+  mediaItems: [
+    { url: "https://example.com/photo.jpg", type: "image" }
+  ]
+});
 ```
 
 ---
