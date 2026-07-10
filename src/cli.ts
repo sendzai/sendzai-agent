@@ -8,7 +8,7 @@ const program = new Command();
 program
   .name("sendzai")
   .description("Sendzai CLI for WhatsApp Automation & AI Agents")
-  .version("1.0.5");
+  .version("1.0.6");
 
 program
   .command("configure")
@@ -184,6 +184,53 @@ program
     } catch (e: any) {
       const errMsg = e.response?.data?.message || e.message;
       console.error(JSON.stringify({ success: false, error: errMsg }, null, 2));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("lists")
+  .description("List/search your recipient contact lists")
+  .option("-q, --query <search>", "Optional query search list names")
+  .action(async (options) => {
+    try {
+      const client = new SendzaiClient();
+      const result = await client.listRecipientLists(options.query);
+      console.log(JSON.stringify(result, null, 2));
+    } catch (e: any) {
+      console.error(JSON.stringify({ success: false, error: e.message }, null, 2));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("contacts")
+  .description("Search for individual contacts/recipients across list groups")
+  .option("-q, --query <search>", "Optional name or phone search string")
+  .option("-l, --list-id <id>", "Optional filter to restrict search to a specific contact list", parseInt)
+  .action(async (options) => {
+    try {
+      const client = new SendzaiClient();
+      const result = await client.searchContacts(options.query, options.listId);
+      console.log(JSON.stringify(result, null, 2));
+    } catch (e: any) {
+      console.error(JSON.stringify({ success: false, error: e.message }, null, 2));
+      process.exit(1);
+    }
+  });
+
+program
+  .command("groups")
+  .description("List/search active WhatsApp groups on connected numbers")
+  .option("-q, --query <search>", "Optional group name search string")
+  .option("-d, --device <id>", "Optional filter to restrict search to a specific sender device/number ID", parseInt)
+  .action(async (options) => {
+    try {
+      const client = new SendzaiClient();
+      const result = await client.searchGroups(options.query, options.device);
+      console.log(JSON.stringify(result, null, 2));
+    } catch (e: any) {
+      console.error(JSON.stringify({ success: false, error: e.message }, null, 2));
       process.exit(1);
     }
   });

@@ -164,5 +164,26 @@ export class SendzaiClient {
     const response = await this.axiosInstance.delete(`/api/v1/agent/schedule/${id}`);
     return response.data;
   }
+
+  async listRecipientLists(query?: string) {
+    const response = await this.axiosInstance.get("/api/v1/agent/lists", {
+      params: { query }
+    });
+    return response.data;
+  }
+
+  async searchContacts(query?: string, listId?: number) {
+    const response = await this.axiosInstance.get("/api/v1/agent/contacts", {
+      params: { query, listId }
+    });
+    return response.data;
+  }
+
+  async searchGroups(query?: string, whatsappNumberId?: number) {
+    const response = await this.axiosInstance.get("/api/v1/agent/groups", {
+      params: { query, whatsappNumberId }
+    });
+    return response.data;
+  }
 }
 

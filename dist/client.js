@@ -122,4 +122,22 @@ export class SendzaiClient {
         const response = await this.axiosInstance.delete(`/api/v1/agent/schedule/${id}`);
         return response.data;
     }
+    async listRecipientLists(query) {
+        const response = await this.axiosInstance.get("/api/v1/agent/lists", {
+            params: { query }
+        });
+        return response.data;
+    }
+    async searchContacts(query, listId) {
+        const response = await this.axiosInstance.get("/api/v1/agent/contacts", {
+            params: { query, listId }
+        });
+        return response.data;
+    }
+    async searchGroups(query, whatsappNumberId) {
+        const response = await this.axiosInstance.get("/api/v1/agent/groups", {
+            params: { query, whatsappNumberId }
+        });
+        return response.data;
+    }
 }

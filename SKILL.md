@@ -58,3 +58,13 @@ Integrate WhatsApp campaigns, session health tracking, quick message delivery, a
 - `sendzai schedules`: List all agent-scheduled messages and statuses.
 - `sendzai cancel [options]`: Cancel a pending schedule.
   - `-i, --id <id>`: Target scheduled message ID.
+
+### 5. Lookups & Searching
+- `sendzai lists [options]`: List/search your recipient contact lists.
+  - `-q, --query <search>`: Search list names.
+- `sendzai contacts [options]`: Search individual contacts/recipients across lists (prioritizes exact case-insensitive matches, falling back to partial contains matching).
+  - `-q, --query <search>`: Search by name or phone.
+  - `-l, --list-id <id>`: Restrict search to a specific contact list.
+- `sendzai groups [options]`: Search active WhatsApp groups on connected numbers (prioritizes exact case-insensitive matches, falling back to partial contains matching).
+  - `-q, --query <search>`: Search group names.
+  - `-d, --device <id>`: Restrict search to a specific sender device/number ID.

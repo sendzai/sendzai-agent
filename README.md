@@ -114,6 +114,47 @@ sendzai cancel --id 174
 
 ---
 
+### 5. Lookups & Searching
+
+Query lists, contacts, or active WhatsApp groups to resolve exact targets easily.
+
+#### A. List Recipient Contact Lists
+```bash
+# List all recipient lists
+sendzai lists
+
+# Filter recipient lists by name query
+sendzai lists --query "Customers"
+```
+
+#### B. Search Contacts Across Lists
+Searches for individual contact entries. Prioritizes exact case-insensitive matches on contact name or phone number first, falling back to a partial contains match.
+```bash
+# List/search all contacts
+sendzai contacts
+
+# Search for a contact by name (prioritizes exact matches)
+sendzai contacts --query "John Doe"
+
+# Search within a specific list
+sendzai contacts --query "John" --list-id 4
+```
+
+#### C. Search WhatsApp Groups
+Searches synced active WhatsApp groups. Prioritizes exact case-insensitive matches on group name, falling back to a partial contains match.
+```bash
+# List all groups
+sendzai groups
+
+# Search for a specific group name (prioritizes exact matches)
+sendzai groups --query "Sales"
+
+# Filter by a specific sender device ID
+sendzai groups --query "Sales" --device 43
+```
+
+---
+
 ## Programmatic SDK Usage
 
 You can also import `SendzaiClient` programmatically inside your Node/TypeScript projects:

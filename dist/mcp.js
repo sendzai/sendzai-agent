@@ -4,7 +4,7 @@ import { SendzaiClient } from "./client.js";
 import { z } from "zod";
 const server = new McpServer({
     name: "sendzai",
-    version: "1.0.5",
+    version: "1.0.6",
 });
 const client = new SendzaiClient();
 // Helper to catch errors and return formatted error messages
@@ -179,6 +179,57 @@ server.registerTool("sendzai_cancel_schedule", {
     })
 }, async (args) => {
     return handleToolCall(() => client.cancelScheduledMessage(args.id));
+});
+// 8. sendzai_list_recipient_lists
+server.registerTool("sendzai_list_recipient_lists", {
+    description: "List/search your recipient contact lists.",
+    inputSchema: {
+        query: z.string().optional().describe("Optional query to filter list names")
+    },
+    outputSchema: z.object({
+        lists: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+            contactCount: z.number(),
+        }))
+    })
+}, async (args) => {
+    return handleToolCall(() => client.listRecipientLists(args.query), (res) => ({ lists: res }));
+});
+// 9. sendzai_search_contacts
+server.registerTool("sendzai_search_contacts", {
+    description: "Search for individual contacts/recipients across list groups. Prioritizes exact matches on name/phone first, falling back to partial contains matches.",
+    inputSchema: {
+        query: z.string().optional().describe("Optional name or phone search string (prioritizes exact case-insensitive matches, falls back to partial match)"),
+        listId: z.number().optional().describe("Optional filter to restrict search to a specific contact list")
+    },
+    outputSchema: z.object({
+        contacts: z.array(z.object({
+            name: z.string().nullable(),
+            phoneNumber: z.string(),
+            listId: z.number(),
+        }))
+    })
+}, async (args) => {
+    return handleToolCall(() => client.searchContacts(args.query, args.listId), (res) => ({ contacts: res }));
+});
+// 10. sendzai_search_groups
+server.registerTool("sendzai_search_groups", {
+    description: "List/search active WhatsApp groups on connected numbers. Prioritizes exact matches on group name, falling back to partial contains matches.",
+    inputSchema: {
+        query: z.string().optional().describe("Optional name search string (prioritizes exact case-insensitive matches, falls back to partial match)"),
+        deviceId: z.number().optional().describe("Optional filter to restrict search to a specific sender device/number")
+    },
+    outputSchema: z.object({
+        groups: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+            groupJid: z.string(),
+            whatsappNumberId: z.number(),
+        }))
+    })
+}, async (args) => {
+    return handleToolCall(() => client.searchGroups(args.query, args.deviceId), (res) => ({ groups: res }));
 });
 async function main() {
     const transport = new StdioServerTransport();
