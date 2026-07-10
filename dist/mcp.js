@@ -4,7 +4,7 @@ import { SendzaiClient } from "./client.js";
 import { z } from "zod";
 const server = new McpServer({
     name: "sendzai",
-    version: "1.0.8",
+    version: "1.0.9",
 });
 const client = new SendzaiClient();
 // Helper to catch errors and return formatted error messages
