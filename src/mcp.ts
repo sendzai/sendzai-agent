@@ -94,7 +94,10 @@ server.registerTool(
     outputSchema: z.object({
       success: z.boolean(),
       senderNumber: z.string(),
+      senderName: z.string().nullable(),
       recipientNumber: z.string(),
+      recipientName: z.string().nullable(),
+      isGroup: z.boolean(),
       dryRun: z.boolean(),
     })
   },
@@ -354,6 +357,7 @@ server.registerTool(
     outputSchema: z.object({
       success: z.boolean(),
       senderNumber: z.string(),
+      senderName: z.string().nullable(),
       messageType: z.string()
     })
   },

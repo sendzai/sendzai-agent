@@ -74,7 +74,10 @@ server.registerTool("sendzai_send_message", {
     outputSchema: z.object({
         success: z.boolean(),
         senderNumber: z.string(),
+        senderName: z.string().nullable(),
         recipientNumber: z.string(),
+        recipientName: z.string().nullable(),
+        isGroup: z.boolean(),
         dryRun: z.boolean(),
     })
 }, async (args) => {
@@ -261,6 +264,7 @@ server.registerTool("sendzai_post_status", {
     outputSchema: z.object({
         success: z.boolean(),
         senderNumber: z.string(),
+        senderName: z.string().nullable(),
         messageType: z.string()
     })
 }, async (args) => {
