@@ -68,3 +68,12 @@ Integrate WhatsApp campaigns, session health tracking, quick message delivery, a
 - `sendzai groups [options]`: Search active WhatsApp groups on connected numbers (prioritizes exact case-insensitive matches, falling back to partial contains matching).
   - `-q, --query <search>`: Search group names.
   - `-d, --device <id>`: Restrict search to a specific sender device/number ID.
+
+### 6. WhatsApp Status Posting
+- `sendzai post-status [options]`: Post a WhatsApp Status/Story update (Text or Media).
+  - `-m, --message <text>`: Plain text body or caption for media status.
+  - `-u, --media-url <url>`: Optional public media file URL to upload as status.
+  - `-d, --device <id>`: Optional sender device/number ID to post from.
+  - `-f, --from <phone>`: Optional sender phone number or session name.
+  - `--no-all-contacts`: Restrict status visibility (default: false, meaning it is shown to all contacts).
+  - `--jids <jids>`: Comma-separated list of explicit JIDs who can view the status.

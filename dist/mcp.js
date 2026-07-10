@@ -4,7 +4,7 @@ import { SendzaiClient } from "./client.js";
 import { z } from "zod";
 const server = new McpServer({
     name: "sendzai",
-    version: "1.0.6",
+    version: "1.0.7",
 });
 const client = new SendzaiClient();
 // Helper to catch errors and return formatted error messages
@@ -230,6 +230,32 @@ server.registerTool("sendzai_search_groups", {
     })
 }, async (args) => {
     return handleToolCall(() => client.searchGroups(args.query, args.deviceId), (res) => ({ groups: res }));
+});
+// 11. sendzai_post_status
+server.registerTool("sendzai_post_status", {
+    description: "Post a WhatsApp Status/Story update (Text or Media). allContacts is true by default.",
+    inputSchema: {
+        message: z.string().optional().describe("Text of the status or caption for the media status"),
+        mediaUrl: z.string().optional().describe("Optional public URL of an image/video file to upload as status"),
+        deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
+        from: z.string().optional().describe("Optional specific phone number or session display name to send from"),
+        allContacts: z.boolean().optional().describe("Whether to display this status to all contacts (defaults to true)"),
+        statusJidList: z.array(z.string()).optional().describe("Optional explicit list of JIDs who can view the status")
+    },
+    outputSchema: z.object({
+        success: z.boolean(),
+        senderNumber: z.string(),
+        messageType: z.string()
+    })
+}, async (args) => {
+    return handleToolCall(() => client.postStatus({
+        message: args.message,
+        mediaUrl: args.mediaUrl,
+        deviceId: args.deviceId,
+        fromPhone: args.from,
+        allContacts: args.allContacts ?? true,
+        statusJidList: args.statusJidList
+    }));
 });
 async function main() {
     const transport = new StdioServerTransport();

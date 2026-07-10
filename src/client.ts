@@ -185,5 +185,17 @@ export class SendzaiClient {
     });
     return response.data;
   }
+
+  async postStatus(payload: {
+    message?: string;
+    mediaUrl?: string;
+    deviceId?: number;
+    fromPhone?: string;
+    allContacts?: boolean;
+    statusJidList?: string[];
+  }) {
+    const response = await this.axiosInstance.post("/api/v1/agent/status-post", payload);
+    return response.data;
+  }
 }
 

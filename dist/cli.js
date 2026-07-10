@@ -5,7 +5,7 @@ const program = new Command();
 program
     .name("sendzai")
     .description("Sendzai CLI for WhatsApp Automation & AI Agents")
-    .version("1.0.6");
+    .version("1.0.7");
 program
     .command("configure")
     .description("Configure Sendzai CLI with your API key (get it from settings dashboard)")
@@ -222,6 +222,34 @@ program
     }
     catch (e) {
         console.error(JSON.stringify({ success: false, error: e.message }, null, 2));
+        process.exit(1);
+    }
+});
+program
+    .command("post-status")
+    .description("Post a WhatsApp Status/Story update (Text or Media)")
+    .option("-m, --message <text>", "Text of the status or caption for media status")
+    .option("-u, --media-url <url>", "Optional public media file URL to upload as status")
+    .option("-d, --device <id>", "Optional sender device ID", parseInt)
+    .option("-f, --from <phone>", "Optional sender phone number or display name")
+    .option("--no-all-contacts", "Restrict visibility instead of showing to all contacts")
+    .option("--jids <jids>", "Comma-separated list of explicit viewable JIDs")
+    .action(async (options) => {
+    try {
+        const client = new SendzaiClient();
+        const result = await client.postStatus({
+            message: options.message,
+            mediaUrl: options.mediaUrl,
+            deviceId: options.device,
+            fromPhone: options.from,
+            allContacts: options.allContacts, // Automatically true unless --no-all-contacts is specified
+            statusJidList: options.jids ? options.jids.split(",") : undefined
+        });
+        console.log(JSON.stringify(result, null, 2));
+    }
+    catch (e) {
+        const errMsg = e.response?.data?.message || e.message;
+        console.error(JSON.stringify({ success: false, error: errMsg }, null, 2));
         process.exit(1);
     }
 });

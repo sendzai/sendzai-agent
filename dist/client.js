@@ -140,4 +140,8 @@ export class SendzaiClient {
         });
         return response.data;
     }
+    async postStatus(payload) {
+        const response = await this.axiosInstance.post("/api/v1/agent/status-post", payload);
+        return response.data;
+    }
 }

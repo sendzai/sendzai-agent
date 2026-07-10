@@ -150,7 +150,29 @@ sendzai groups
 sendzai groups --query "Sales"
 
 # Filter by a specific sender device ID
+# Filter by a specific sender device ID
 sendzai groups --query "Sales" --device 43
+```
+
+---
+
+### 6. WhatsApp Status Posting
+
+Post a text or media (image/video) story update to your WhatsApp Status. Visible to all contacts by default.
+
+#### A. Text Status
+```bash
+sendzai post-status -m "Working on a new feature release 🚀"
+```
+
+#### B. Media Status (Image/Video)
+```bash
+sendzai post-status -u "https://picsum.photos/800/600" -m "Enjoying a beautiful morning!"
+```
+
+#### C. Custom Viewers List (JIDs)
+```bash
+sendzai post-status -m "Internal update" --no-all-contacts --jids "917821876667@s.whatsapp.net,120363028436768532@g.us"
 ```
 
 ---
@@ -164,7 +186,7 @@ import { SendzaiClient } from "@sendzai/agent";
 
 const client = new SendzaiClient();
 
-// Send quick message
+// 1. Send quick message
 const result = await client.sendMessage(
   "John Doe", 
   "Hello John!", 
@@ -174,6 +196,14 @@ const result = await client.sendMessage(
 );
 
 console.log("Sent successfully:", result);
+
+// 2. Post status update
+const statusResult = await client.postStatus({
+  message: "Daily update posted from AI Agent",
+  allContacts: true
+});
+
+console.log("Status posted:", statusResult);
 ```
 
 ---
