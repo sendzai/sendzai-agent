@@ -37,8 +37,11 @@ Integrate WhatsApp campaigns, session health tracking, quick message delivery, a
 
 ### 4. Advanced Message Scheduling
 - `sendzai schedule [options]`:
-  - `-t, --to <phone_or_name>`: Recipient phone number, contact name, or WhatsApp group name.
-  - `-m, --message <text>`: Message body text.
+  - `-t, --to <phone_or_name>`: Recipient phone number, contact name, or WhatsApp group name (optional if `--status` is used).
+  - `--status`: Optional. Schedule a WhatsApp Status update instead of a direct message.
+  - `--no-all-contacts`: Optional (for status). Restrict visibility.
+  - `--jids <jids>`: Optional (for status). Comma-separated list of target JIDs.
+  - `-m, --message <text>`: Message body text or status caption.
   - `-a, --at <datetime>`: Target delivery date-time (ISO-8601 or `yyyy-MM-dd HH:mm`).
   - `-z, --timezone <tz>`: Timezone (e.g., `Asia/Kolkata`). Defaults to the user's account timezone if not specified.
   - `-f, --from <phone_or_name>`: Optional. Pin sender by phone number or session display name.

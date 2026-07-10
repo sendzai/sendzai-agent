@@ -103,13 +103,17 @@ server.registerTool("sendzai_list_campaigns", {
 server.registerTool("sendzai_schedule_message", {
     description: "Schedule a WhatsApp message or recurring sequence to be sent in the future.",
     inputSchema: {
-        to: z.string().describe("Recipient phone number, contact name, or WhatsApp group name (e.g. +919876543210, Jane, or AutoSend Test Group)"),
+        scheduleType: z.enum(["message", "status"]).optional().describe("Defaults to 'message'. Set to 'status' to schedule a status update."),
+        to: z.string().optional().describe("Recipient phone number, contact name, or WhatsApp group name. Required if scheduleType is 'message'."),
         message: z.string().describe("The text message body to send"),
         at: z.string().describe("Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 string"),
         timezone: z.string().optional().describe("Timezone identifier (e.g. Asia/Kolkata). Defaults to the user's account timezone if not specified."),
         deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
         from: z.string().optional().describe("Optional specific phone number or session display name to send from (e.g. Vexx)"),
-        mediaUrl: z.string().optional().describe("Optional public media URL"),
+        mediaItems: z.array(z.object({
+            url: z.string().describe("Public URL of the media attachment"),
+            type: z.enum(["image", "video"]).describe("Type of the media")
+        })).optional().describe("Optional list of structured media attachments (e.g. [{url: '...', type: 'image'}])"),
         windowStart: z.string().optional().describe("Delivery window start: 'HH:mm' (e.g. 09:00)"),
         windowEnd: z.string().optional().describe("Delivery window end: 'HH:mm' (e.g. 21:00)"),
         allowedDays: z.array(z.string()).optional().describe("Allowed days (e.g. ['MON', 'TUE', 'WED'])"),
@@ -119,7 +123,9 @@ server.registerTool("sendzai_schedule_message", {
         maxRepeats: z.number().optional().describe("Max number of repeats"),
         repeatEnd: z.string().optional().describe("Stop repeating after this date ('yyyy-MM-dd HH:mm')"),
         times: z.array(z.string()).optional().describe("Specific delivery times for SEVERAL type"),
-        type: z.string().optional().describe("Scheduling type: DAILY | WEEKDAY | WEEKEND | WEEKLY | MONTHLY | YEARLY | HOURLY | SEVERAL | CUSTOM | INTERVAL")
+        type: z.string().optional().describe("Scheduling type: DAILY | WEEKDAY | WEEKEND | WEEKLY | MONTHLY | YEARLY | HOURLY | SEVERAL | CUSTOM | INTERVAL"),
+        allContacts: z.boolean().optional().describe("For status updates: Whether to display this status to all contacts (defaults to true)"),
+        statusJidList: z.array(z.string()).optional().describe("For status updates: Optional explicit list of JIDs who can view the status")
     },
     outputSchema: z.object({
         id: z.number(),
@@ -130,14 +136,19 @@ server.registerTool("sendzai_schedule_message", {
         isRecurring: z.boolean(),
     })
 }, async (args) => {
+    const sType = args.scheduleType || "message";
+    const targetRecipient = sType === "status" ? "status@broadcast" : args.to;
+    if (sType === "message" && !targetRecipient) {
+        throw new Error("Recipient 'to' is required for message scheduling.");
+    }
     return handleToolCall(() => client.scheduleMessage({
-        to: args.to,
+        to: targetRecipient,
         message: args.message,
         sendAt: args.at,
         timezone: args.timezone,
         deviceId: args.deviceId,
         fromPhone: args.from,
-        mediaUrl: args.mediaUrl,
+        mediaItems: args.mediaItems,
         windowStart: args.windowStart,
         windowEnd: args.windowEnd,
         allowedDays: args.allowedDays,
@@ -148,6 +159,8 @@ server.registerTool("sendzai_schedule_message", {
         repeatEndAt: args.repeatEnd,
         specificTimes: args.times,
         type: args.type,
+        allContacts: args.allContacts ?? true,
+        statusJidList: args.statusJidList,
     }));
 });
 // 6. sendzai_list_schedules
@@ -236,7 +249,10 @@ server.registerTool("sendzai_post_status", {
     description: "Post a WhatsApp Status/Story update (Text or Media). allContacts is true by default.",
     inputSchema: {
         message: z.string().optional().describe("Text of the status or caption for the media status"),
-        mediaUrl: z.string().optional().describe("Optional public URL of an image/video file to upload as status"),
+        mediaItems: z.array(z.object({
+            url: z.string().describe("Public URL of the media attachment"),
+            type: z.enum(["image", "video"]).describe("Type of the media attachment")
+        })).optional().describe("Optional list of structured media attachments to upload as status (ideal for multiple statuses)"),
         deviceId: z.number().optional().describe("Optional specific device ID slot to send from"),
         from: z.string().optional().describe("Optional specific phone number or session display name to send from"),
         allContacts: z.boolean().optional().describe("Whether to display this status to all contacts (defaults to true)"),
@@ -250,7 +266,7 @@ server.registerTool("sendzai_post_status", {
 }, async (args) => {
     return handleToolCall(() => client.postStatus({
         message: args.message,
-        mediaUrl: args.mediaUrl,
+        mediaItems: args.mediaItems,
         deviceId: args.deviceId,
         fromPhone: args.from,
         allContacts: args.allContacts ?? true,

@@ -138,7 +138,7 @@ export class SendzaiClient {
     timezone?: string;
     deviceId?: number;
     fromPhone?: string;
-    mediaUrl?: string;
+    mediaItems?: Array<{ url: string; type: "image" | "video" }>;
     windowStart?: string;
     windowEnd?: string;
     allowedDays?: string[];
@@ -149,6 +149,8 @@ export class SendzaiClient {
     repeatEndAt?: string;
     specificTimes?: string[];
     type?: string;
+    allContacts?: boolean;
+    statusJidList?: string[];
     dryRun?: boolean;
   }) {
     const response = await this.axiosInstance.post("/api/v1/agent/schedule", payload);
@@ -188,7 +190,7 @@ export class SendzaiClient {
 
   async postStatus(payload: {
     message?: string;
-    mediaUrl?: string;
+    mediaItems?: Array<{ url: string; type: "image" | "video" }>;
     deviceId?: number;
     fromPhone?: string;
     allContacts?: boolean;

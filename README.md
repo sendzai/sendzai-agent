@@ -102,6 +102,13 @@ sendzai schedule -t "Sendzai" \
   --dry-run
 ```
 
+#### D. Scheduling Status updates
+```bash
+# Schedule a WhatsApp status update with a caption
+sendzai schedule --status -m "Scheduled morning status update!" -a "2026-07-11 09:00" -z "Asia/Kolkata"
+```
+
+
 ### 4. Manage Schedules
 List pending agent campaigns or cancel a scheduled slot:
 ```bash

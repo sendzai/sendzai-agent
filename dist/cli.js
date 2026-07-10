@@ -2,6 +2,14 @@
 import { Command } from "commander";
 import { saveConfig, SendzaiClient, clearConfig, loadConfig } from "./client.js";
 const program = new Command();
+function collectMedia(value, previous) {
+    const idx = value.indexOf(":");
+    if (idx === -1)
+        return previous;
+    const type = value.substring(0, idx);
+    const url = value.substring(idx + 1);
+    return previous.concat({ type, url });
+}
 program
     .name("sendzai")
     .description("Sendzai CLI for WhatsApp Automation & AI Agents")
@@ -98,14 +106,15 @@ program
 });
 program
     .command("schedule")
-    .description("Schedule a WhatsApp message to be sent at a specific time")
-    .requiredOption("-t, --to <phone>", "Recipient phone number")
-    .requiredOption("-m, --message <text>", "Message body text")
+    .description("Schedule a WhatsApp message or Status update")
+    .option("-t, --to <phone>", "Recipient phone number, contact name, or WhatsApp group name (required for messages)")
+    .option("--status", "Schedule a WhatsApp Status/Story update instead of a message")
+    .requiredOption("-m, --message <text>", "Message body text or status caption")
     .requiredOption("-a, --at <datetime>", "Send time: 'yyyy-MM-dd HH:mm' or ISO-8601 (e.g. 2024-12-01T10:00:00Z)")
     .option("-z, --timezone <tz>", "Timezone (e.g. Asia/Kolkata). Defaults to your account timezone if not specified.")
     .option("-d, --device <id>", "Pin to sender device by ID")
     .option("-f, --from <phone>", "Pin to sender device by phone number")
-    .option("-u, --media-url <url>", "Optional media URL")
+    .option("--media <type:url>", "Media attachment (repeatable, e.g. --media image:https://site/a.jpg)", collectMedia, [])
     .option("--window-start <HH:mm>", "Delivery window start (e.g. 09:00)")
     .option("--window-end <HH:mm>", "Delivery window end (e.g. 21:00)")
     .option("--allowed-days <days>", "Comma-separated allowed days: MON,TUE,WED,THU,FRI,SAT,SUN")
@@ -116,18 +125,26 @@ program
     .option("--repeat-end <datetime>", "Stop repeating after this date")
     .option("--times <HH:mm,...>", "Specific times for SEVERAL type (comma-separated)")
     .option("--type <type>", "Scheduling type: DAILY | WEEKDAY | WEEKEND | WEEKLY | MONTHLY | YEARLY | HOURLY | SEVERAL | CUSTOM | INTERVAL")
+    .option("--no-all-contacts", "Restrict status visibility instead of showing to all contacts")
+    .option("--jids <jids>", "Comma-separated list of explicit viewable JIDs for status updates")
     .option("--dry-run", "Validate inputs and schedule configurations without saving", false)
     .action(async (options) => {
     try {
         const client = new SendzaiClient();
+        const isStatus = options.status || options.to === "status@broadcast";
+        const targetRecipient = isStatus ? "status@broadcast" : options.to;
+        if (!isStatus && !targetRecipient) {
+            console.error(JSON.stringify({ success: false, error: "Recipient option '-t, --to <phone>' is required when scheduling a message." }, null, 2));
+            process.exit(1);
+        }
         const result = await client.scheduleMessage({
-            to: options.to,
+            to: targetRecipient,
             message: options.message,
             sendAt: options.at,
             timezone: options.timezone,
             deviceId: options.device ? parseInt(options.device, 10) : undefined,
             fromPhone: options.from,
-            mediaUrl: options.mediaUrl,
+            mediaItems: options.media?.length ? options.media : undefined,
             windowStart: options.windowStart,
             windowEnd: options.windowEnd,
             allowedDays: options.allowedDays ? options.allowedDays.split(",") : undefined,
@@ -138,6 +155,8 @@ program
             repeatEndAt: options.repeatEnd,
             specificTimes: options.times ? options.times.split(",") : undefined,
             type: options.type,
+            allContacts: options.allContacts,
+            statusJidList: options.jids ? options.jids.split(",") : undefined,
             dryRun: options.dryRun,
         });
         console.log(JSON.stringify(result, null, 2));
@@ -229,7 +248,7 @@ program
     .command("post-status")
     .description("Post a WhatsApp Status/Story update (Text or Media)")
     .option("-m, --message <text>", "Text of the status or caption for media status")
-    .option("-u, --media-url <url>", "Optional public media file URL to upload as status")
+    .option("--media <type:url>", "Media attachment (repeatable, e.g. --media image:https://site/a.jpg)", collectMedia, [])
     .option("-d, --device <id>", "Optional sender device ID", parseInt)
     .option("-f, --from <phone>", "Optional sender phone number or display name")
     .option("--no-all-contacts", "Restrict visibility instead of showing to all contacts")
@@ -239,7 +258,7 @@ program
         const client = new SendzaiClient();
         const result = await client.postStatus({
             message: options.message,
-            mediaUrl: options.mediaUrl,
+            mediaItems: options.media?.length ? options.media : undefined,
             deviceId: options.device,
             fromPhone: options.from,
             allContacts: options.allContacts, // Automatically true unless --no-all-contacts is specified
