@@ -1,6 +1,6 @@
 # Sendzai Agent CLI & SDK
 
-An automated WhatsApp messaging orchestrator and CLI utility for human operators and AI Agent workflows. Connect your slots, manage campaigns, resolve contact & group names dynamically, and schedule recurring messages with complex business rules.
+An automated WhatsApp messaging orchestrator and CLI utility for human operators and AI Agent workflows. Connect your slots, manage campaigns, resolve contact & group names dynamically, schedule recurring messages, and post WhatsApp Status/Stories with complex business rules.
 
 ---
 
